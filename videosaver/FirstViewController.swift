@@ -8,6 +8,7 @@
 
 import UIKit
 import Foundation
+import Photos
 
 class FirstViewController: UIViewController {
     
@@ -55,11 +56,29 @@ class FirstViewController: UIViewController {
 //                let matched = matches(for: "video_url\":\"(.*mp4)\"", in: myHTMLString)
 
                 let matched = matches(for: "video_url\":\"(.*mp4).*fna.fbcdn.net\",\"video_view_count", in: myHTMLString)
-                print(matched)
-                let new_string = matched[0].replacingOccurrences(of: "video_url\":\"", with: "")
+                let matched_1_replace = matched[0].replacingOccurrences(of: "video_url\":\"", with: "")
                 
-                let string_new = new_string.replacingOccurrences(of: "\",\"video_view_count", with: "")
-                print(string_new)
+                let matched_2_replace = matched_1_replace.replacingOccurrences(of: "\",\"video_view_count", with: "")
+                print(matched_2_replace)
+                
+                DispatchQueue.global(qos: .background).async {
+                    if let url = URL(string: matched_2_replace),
+                        let urlData = NSData(contentsOf: url) {
+                            let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0];
+                            let filePath="\(documentsPath)/tempFile.mp4"
+                            DispatchQueue.main.async {
+                                urlData.write(toFile: filePath, atomically: true)
+                                PHPhotoLibrary.shared().performChanges({
+                                    PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: URL(fileURLWithPath: filePath))
+                                }) { completed, error in
+                                    if completed {
+                                        self.DownloadAction.text = "Видео скачано"
+                                        print("video saved!!")
+                                    }
+                                }
+                            }
+                    }
+                }
                 
             } catch let error {
                 print("Error: \(error)")
