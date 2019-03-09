@@ -53,30 +53,40 @@ class FirstViewController: UIViewController {
 
             do {
                 let myHTMLString = try String(contentsOf: myURL as URL)
+
 //                let matched = matches(for: "video_url\":\"(.*mp4)\"", in: myHTMLString)
 
-                let matched = matches(for: "video_url\":\"(.*mp4).*fna.fbcdn.net\",\"video_view_count", in: myHTMLString)
+                let matched = matches(for: "video_url\":\"(.*mp4).*\",\"video_view_count", in: myHTMLString)
+                print(matched)
                 let matched_1_replace = matched[0].replacingOccurrences(of: "video_url\":\"", with: "")
                 
                 let matched_2_replace = matched_1_replace.replacingOccurrences(of: "\",\"video_view_count", with: "")
                 print(matched_2_replace)
                 
-                DispatchQueue.global(qos: .background).async {
+                DispatchQueue.global(qos: .userInteractive).async {
+                    print("11111111")
                     if let url = URL(string: matched_2_replace),
                         let urlData = NSData(contentsOf: url) {
+                            print("33333333")
                             let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0];
+                            print("4444444")
                             let filePath="\(documentsPath)/tempFile.mp4"
+                            print("5555555")
                             DispatchQueue.main.async {
+                                print("6666666")
                                 urlData.write(toFile: filePath, atomically: true)
                                 PHPhotoLibrary.shared().performChanges({
+                                    print("88888888")
                                     PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: URL(fileURLWithPath: filePath))
                                 }) { completed, error in
                                     if completed {
-                                        self.DownloadAction.text = "Видео скачано"
                                         print("video saved!!")
+                                        let notification = Notification(name: Notification.Name("Скачано"))
+                                        NotificationQueue.default.enqueue(notification, postingStyle: .whenIdle, coalesceMask: .none, forModes: nil)
                                     }
                                 }
                             }
+                        self.DownloadAction.text = "Видео скачано"
                     }
                 }
                 
